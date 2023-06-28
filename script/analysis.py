@@ -26,7 +26,7 @@ def map_address(map: dict [str, int]) -> pl.Expr:
 
 
 def convert_time_date(column: str | Iterable [str]) -> pl.Expr:
-	"""Convert time to specific format
+	"""Convert unix time to second time in gmt+8
 
     Args:
             column (str): column name
@@ -34,17 +34,17 @@ def convert_time_date(column: str | Iterable [str]) -> pl.Expr:
     Returns:
             pl.Expr: _description_
     """
-	GMT8_OFFSET = 3600 * 8
-	DURATION_1DAY = 3600 * 24
+	gmt8_offset = 3600 * 8
+	duration_1day = 3600 * 24
 
 	return (
-		pl.col(column).map(lambda x: (x + GMT8_OFFSET) / DURATION_1DAY).cast(pl.Int32)
+		pl.col(column).map(lambda x: (x + gmt8_offset) / duration_1day).cast(pl.Int32)
 	)
 
 
 def compute_working_days(df: pl.LazyFrame) -> tuple [np.ndarray, np.ndarray]:
-	WORKDAYS = "1111110"
-	HOLIDAYS = ["2020-03-08", "2020-03-25", "2020-03-30", "2020-03-31"]
+	workdays = "1111110"
+	holidays = ["2020-03-08", "2020-03-25", "2020-03-30", "2020-03-31"]
 
 	t1 = (
 		(df.select(convert_time_date("pick")))
@@ -54,21 +54,21 @@ def compute_working_days(df: pl.LazyFrame) -> tuple [np.ndarray, np.ndarray]:
 	)
 
 	t2 = (
-		(df.select(convert_time_date("1st_deliver_attempt")))
+		(df.select(convert_time_date("first_deliver_attempt")))
 		.collect()
 		.to_numpy()
 		.astype("datetime64[D]")
 	)
 
 	t3 = (
-		(df.select(convert_time_date("2nd_deliver_attempt").fill_null(strategy="zero")))
+		(df.select(convert_time_date("second_deliver_attempt").fill_null(strategy="zero")))
 		.collect()
 		.to_numpy()
 		.astype("datetime64[D]")
 	)
 
-	num_days1 = np.busday_count(t1, t2, weekmask=WORKDAYS, holidays=HOLIDAYS).flatten()
-	num_days2 = np.busday_count(t2, t3, weekmask=WORKDAYS, holidays=HOLIDAYS).flatten()
+	num_days1 = np.busday_count(t1, t2, weekmask=workdays, holidays=holidays).flatten()
+	num_days2 = np.busday_count(t2, t3, weekmask=workdays, holidays=holidays).flatten()
 	return num_days1, num_days2
 
 
@@ -96,11 +96,15 @@ def tweak_result(df: pl.LazyFrame) -> tuple [DataFrame, LazyFrame]:
 				]
 		)
 		.with_columns(
-				(4 * pl.col("buyeraddress") + pl.col("selleraddress"))
+				(4 * pl.col("buyer_address") + pl.col("seller_address"))
 				.alias("sla")
-				.map_dict(map_to_dict),
-				pl.Series(name="num_days1", values=num_days1),
-				pl.Series(name="num_days2", values=num_days2).clip_min(lower_bound=0),
+				.map_dict(map_to_dict)
+				.cast(pl.Int32),
+				pl.Series(name="num_days1", values=num_days1)
+				.cast(pl.Int32),
+				pl.Series(name="num_days2", values=num_days2)
+				.clip_min(lower_bound=0)
+				.cast(pl.Int32)
 		)
 		.collect()
 		.with_columns(
@@ -111,10 +115,10 @@ def tweak_result(df: pl.LazyFrame) -> tuple [DataFrame, LazyFrame]:
 					.then(pl.lit(1, pl.Int32))
 					.otherwise(pl.lit(0, pl.Int32))
 					.alias("is_late"),
-					pl.col(['buyeraddress', 'selleraddress']).map_dict(index_to_location),
+					pl.col(['buyer_address', 'seller_address']).map_dict(index_to_location),
 					# pl.when(pl.col("num_days2") < 0).then(pl.lit(0)).,
 					pl.from_epoch(
-							pl.col(["pick", "1st_deliver_attempt", "2nd_deliver_attempt"]),
+							pl.col(["pick", "first_deliver_attempt", "second_deliver_attempt"]),
 							time_unit="s",
 					),
 
