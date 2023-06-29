@@ -131,7 +131,8 @@ def tweak_result(df: pl.LazyFrame) -> tuple [DataFrame, LazyFrame]:
 		.groupby("is_late")
 		.agg(pl.count("is_late").alias("count_order"))
 		.with_columns(
-				(pl.col("count_order") / pl.col("count_order").sum()).alias("percent_late")
+				(pl.col("count_order") / pl.col("count_order").sum())
+				.alias("percent_late")
 		)
 	)
 

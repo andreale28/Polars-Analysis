@@ -95,7 +95,7 @@ def write_data_to_deltatable(con: DuckDBPyConnection, table: str):
 
 def read_deltatable(table_name: str, columns: Iterable [str]) -> pl.LazyFrame:
 	"""Load parquet format data to deltalake format, do compact and z-order optimization
-	 then use scan delta method from polars to load it to lazyframe
+	    then use scan delta method from polars to load it to lazyframe
 
 	Args:
 		table_name (str): name of table
