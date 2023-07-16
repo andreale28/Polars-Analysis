@@ -49,7 +49,7 @@ def duckdb_connection( ) -> DuckDBPyConnection:
 	load_s3_envvars(vars=REQUIRED_S3_KEYS)
 
 	# connect to duckdb and setup extensions
-	con = duckdb.connect()
+	con = duckdb.connect(':memory:')
 	con.sql(
 			f"""
         INSTALL httpfs;
@@ -93,7 +93,10 @@ def write_data_to_deltatable(con: DuckDBPyConnection, table: str):
 	)
 
 
-def read_deltatable(table_name: str, columns: Iterable [str]) -> pl.LazyFrame:
+def read_deltatable(
+		table_name: str,
+		columns: Iterable [str]
+		) -> pl.LazyFrame:
 	"""Load parquet format data to deltalake format, do compact and z-order optimization
 	    then use scan delta method from polars to load it to lazyframe
 

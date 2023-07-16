@@ -20,7 +20,10 @@ jupyter = "^1.0.0"
 numpy = "^1.25.0"
 s3fs = "^2023.6.0"
 ipython = "^8.14.0"
-patito = "^0.5.0"
+patito = "0.5.0"
+pydantic = "1.10.11"
+boto3 = ">=1.15.3"
+
 
 
 [tool.poetry.group.dev.dependencies]

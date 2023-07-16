@@ -1,7 +1,9 @@
 import os
 import time
 
+import dotenv
 import patito as pt
+import s3fs
 
 from analysis import tweak_result
 from schemas import (
@@ -14,7 +16,32 @@ from write_deltatable import (
 )
 
 
+def check_file_exists(bucket_name, file_name, key, secret):
+	"""Check if a file exists in S3 storage.
+
+	Args:
+		bucket_name (str): The name of the S3 bucket.
+		file_name (str): The name of the file to check.
+		key (str): access key to s3
+		secret (str): secret access key to s3
+
+	Returns:
+		bool: True if the file exists, False otherwise.
+	"""
+
+	fs = s3fs.S3FileSystem(anon=True,
+	                       key=key,
+	                       secret=secret)
+	try:
+		fs.open(f's3://{bucket_name}/data/{file_name}')
+		return True
+	except FileNotFoundError:
+		return False
+
+
 def main():
+	dotenv.load_dotenv()
+
 	start_time = time.time()
 
 	table = "march_order"
@@ -46,14 +73,20 @@ def main():
 	conn.sql("SELECT * FROM output;").to_table("output")
 	conn.sql("SUMMARIZE output;").show()
 
-	conn.sql(
-			f"""
-        COPY
-            output
-        TO
-            's3://{os.getenv('S3_BUCKET')}/data/output.parquet'(FORMAT 'PARQUET');
-        """
-	)
+	bucket_name = os.getenv("S3_BUCKET")
+	file_name = os.getenv("S3_FILE_NAME")
+	key = os.getenv("aws_access_key_id")
+	secret = os.getenv("aws_secret_access_key")
+
+	if not check_file_exists(bucket_name, file_name, key, secret):
+		conn.sql(
+				f"""
+	        COPY
+	            output
+	        TO
+	            's3://{bucket_name}/data/{file_name}'(FORMAT 'PARQUET');
+	        """
+		)
 
 	print(f"DuckDB execution time: {time.time() - start_time} seconds")
 
