@@ -24,7 +24,8 @@ The combined data stack can act as the performant option in low-latency ETLs on 
 - **Polars** is a highly performant DataFrame library for manipulating structured data. The core is written in Rust, but
   the library is available in Python. Polars comes with a vectorized query engine which is for data processing manner.
 
-![Data pipeline design](/Users/sonle/Documents/GitHub/ServerlessPolars/Untitled-2023-06-22-0944.png)
+![Data pipeline design](![Untitled-2023-06-22-0944](https://github.com/andreale28/Polars-Analysis/assets/35947304/3208f4bc-6a1e-4a8b-82ef-e1660c99d1d4)
+
 
 ## Setup
 
