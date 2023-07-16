@@ -1,5 +1,6 @@
 # Polars Analysis
 
+A pipeline to pull data from S3 and process using Polars, Delta-RS and DuckDB
 ## Design
 
 In this project, we will use `polars` , `duckdb` and `pyarrow` as main data stack
