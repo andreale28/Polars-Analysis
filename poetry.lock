@@ -1895,18 +1895,18 @@ testing = ["docopt", "pytest (<6.0.0)"]
 
 [[package]]
 name = "patito"
-version = "0.5.0"
+version = "0.5.1"
 description = "A dataframe modelling library built on top of polars and pydantic."
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    { file = "patito-0.5.0-py3-none-any.whl", hash = "sha256:5a8c3e13561ac037f740d8e9c61ed9322987471b919e915de85e48da50053f32" },
-    { file = "patito-0.5.0.tar.gz", hash = "sha256:fe7f18fa5c49e08334940bc97744cd9c2f848aabc0ffb577d28220bc30932861" },
+    { file = "patito-0.5.1-py3-none-any.whl", hash = "sha256:a8e82b3985727e9959e925855df99f613ccaac63cf46859fa39a1bb1fbd1cac8" },
+    { file = "patito-0.5.1.tar.gz", hash = "sha256:0c6ad72f7094e06d63c60b2dbca265357a47642243fd8210e08c251f01346c56" },
 ]
 
 [package.dependencies]
-polars = ">=0.18.3"
-pydantic = ">=1.7.0"
+polars = ">=0.18.7"
+pydantic = ">=1.7.0,<2.0.0"
 typing-extensions = "*"
 
 [package.extras]
@@ -3119,4 +3119,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "3.10.10"
-content-hash = "527ab58857bb9af14e218a887a625e3ece325ebacfca3a185234e832377841d0"
+content-hash = "682f1b9ead81d9d8d82a47bf06eaa65c70f15b9a27b48ff30465a4791579467d"
