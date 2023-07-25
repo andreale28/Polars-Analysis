@@ -86,6 +86,15 @@ poetry install
 python3 -m main.py
 ```
 
+To run Docker container, you can run Dockerfile following these commands.
+
+```shell
+docker build . -t polars-analysis
+docker run --entrypoint /bin/bash -it polars-analysis
+cd script
+python -m main
+```
+
 ## Contributing
 
 Contributions are welcome. If you would like to contribute you can help by opening a Github issue or putting up a PR.
