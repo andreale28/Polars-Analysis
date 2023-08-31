@@ -5,10 +5,10 @@ import dotenv
 import patito as pt
 import s3fs
 
-from analysis import tweak_result
 from schemas import (
 	Input, Output
 )
+from transforms import tweak_result
 from write_deltatable import (
 	duckdb_connection,
 	read_deltatable,

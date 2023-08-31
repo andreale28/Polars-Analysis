@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Iterable
 
 import numpy as np
@@ -6,7 +8,7 @@ import polars.selectors as cs
 from polars import DataFrame, LazyFrame
 
 
-def map_address(map: dict [str, int]) -> pl.Expr:
+def map_address(map_dict: dict [str, int]) -> pl.Expr:
 	"""A function to slice from the end of a string with given offset
     then map string according to a location_to_index dict
 
@@ -20,7 +22,7 @@ def map_address(map: dict [str, int]) -> pl.Expr:
 		cs.string()
 		.str.to_lowercase()
 		.str.extract(r"(.{0,5})$")
-		.map_dict(map)
+		.map_dict(map_dict)
 		# .string().str.to_lowercase().apply(lambda x: x[-min_length:])
 	)
 
@@ -89,46 +91,45 @@ def tweak_result(df: pl.LazyFrame) -> tuple [DataFrame, LazyFrame]:
 	map_to_dict = dict(enumerate(np.array(sla_matrix_1st_attempt).flatten().tolist()))
 
 	num_days1, num_days2 = compute_working_days(df)
-	output = (
-		df.with_columns(
-				[
-					map_address(trunc_location_to_index),
-				]
-		)
-		.with_columns(
-				(4 * pl.col("buyer_address") + pl.col("seller_address"))
-				.alias("sla")
-				.map_dict(map_to_dict)
-				.cast(pl.Int32),
-				pl.Series(name="num_days1", values=num_days1)
-				.cast(pl.Int32),
-				pl.Series(name="num_days2", values=num_days2)
-				.clip_min(lower_bound=0)
-				.cast(pl.Int32)
-		)
-		.collect()
-		.with_columns(
-				[
-					pl.when(
-							(pl.col("num_days1") > pl.col("sla")) | (pl.col("num_days2") > 3)
-					)
-					.then(pl.lit(1, pl.Int32))
-					.otherwise(pl.lit(0, pl.Int32))
-					.alias("is_late"),
-					pl.col(['buyer_address', 'seller_address']).map_dict(index_to_location),
-					# pl.when(pl.col("num_days2") < 0).then(pl.lit(0)).,
-					pl.from_epoch(
-							pl.col(["pick", "first_deliver_attempt", "second_deliver_attempt"]),
-							time_unit="s",
-					),
+	output = (df.with_columns(
+			[
+				map_address(trunc_location_to_index),
+			]
+	)
+	.with_columns(
+			(4 * pl.col("buyer_address") + pl.col("seller_address"))
+			.alias("sla")
+			.map_dict(map_to_dict)
+			.cast(pl.Int32),
+			pl.Series(name="num_days1", values=num_days1)
+			.cast(pl.Int32),
+			pl.Series(name="num_days2", values=num_days2)
+			.clip_min(lower_bound=0)
+			.cast(pl.Int32)
+	)
+	.collect()
+	.with_columns(
+			[
+				pl.when(
+						(pl.col("num_days1") > pl.col("sla")) | (pl.col("num_days2") > 3)
+				)
+				.then(pl.lit(1, pl.Int32))
+				.otherwise(pl.lit(0, pl.Int32))
+				.alias("is_late"),
+				pl.col(['buyer_address', 'seller_address']).map_dict(index_to_location),
+				# pl.when(pl.col("num_days2") < 0).then(pl.lit(0)).,
+				pl.from_epoch(
+						pl.col(["pick", "first_deliver_attempt", "second_deliver_attempt"]),
+						time_unit="s",
+				),
 
-				]
-		)
+			]
+	)
 	)
 
 	result = (
 		output.lazy()
-		.groupby("is_late")
+		.group_by("is_late")
 		.agg(pl.count("is_late").alias("count_order"))
 		.with_columns(
 				(pl.col("count_order") / pl.col("count_order").sum())
