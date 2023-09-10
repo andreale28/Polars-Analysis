@@ -52,8 +52,6 @@ def main():
 	# write data to deltalake
 	write_data_to_deltatable(conn, table=table)
 
-	conn.sql(f"SUMMARIZE {table}").show()
-
 	df = read_deltatable(table_name=table, columns=columns)
 
 	try:
@@ -71,20 +69,20 @@ def main():
 	print(f"Percentage of late delivered orders {result.collect()}")
 
 	conn.sql("select * from output;").to_table("output")
-	# conn.sql("SUMMARIZE output;").show()
-	#
-	bucket_name = os.getenv("S3_BUCKET")
-	file_name = os.getenv("S3_FILE_NAME")
-	key = os.getenv("aws_access_key_id")
-	secret = os.getenv("aws_secret_access_key")
+	conn.sql("SUMMARIZE output;").show()
 
-	if not check_file_exists(bucket_name, file_name, key, secret):
+	bucket_name = os.getenv("S3_BUCKET")
+	output_name = os.getenv("S3_FILE_NAME")
+	key = os.getenv("aws_access_key_id")
+	secret_key = os.getenv("aws_secret_access_key")
+
+	if not check_file_exists(bucket_name, output_name, key, secret_key):
 		conn.sql(
 				f"""
 	        COPY
 	            output
 	        TO
-	            's3://{bucket_name}/data/{file_name}'(FORMAT 'PARQUET');
+	            's3://{bucket_name}/data/{output_name}'(FORMAT 'PARQUET');
 	        """
 		)
 

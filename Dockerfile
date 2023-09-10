@@ -1,6 +1,6 @@
 FROM python:3.10.10-slim-bullseye
 
-ENV POETRY_VERSION=1.5.0
+ENV POETRY_VERSION=1.6.0
 
 ENV POETRY_HOME=/opt/poetry
 ENV POETRY_VIRTUALENVS_CREATE=false
@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y build-essential
  && rm -rf /var/lib/apt/lists/*
 
 # Install application
-COPY src ./script
+COPY src ./src
 RUN poetry install --only main --without dev && rm -rf $POETRY_CACHE_DIR
 
 # Switch to non-root user
@@ -46,4 +46,4 @@ RUN poetry install --only main --without dev && rm -rf $POETRY_CACHE_DIR
 #    $USER
 #USER $USER
 
-ENTRYPOINT ["python", "-m", "script.main"]
+ENTRYPOINT ["python", "-m", "src.main"]

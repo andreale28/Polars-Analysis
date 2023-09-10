@@ -133,7 +133,7 @@ def tweak_result(df: pl.LazyFrame) -> tuple [DataFrame, LazyFrame]:
 
 	result = (
 		output.lazy()
-		.group_by("is_late")
+		.groupby("is_late")
 		.agg(pl.count("is_late").alias("count_order"))
 		.with_columns(
 				(pl.col("count_order") / pl.col("count_order").sum())

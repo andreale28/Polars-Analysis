@@ -43,7 +43,7 @@ def duckdb_connection( ) -> DuckDBPyConnection:
 		"AWS_DEFAULT_REGION",
 		"AWS_ACCESS_KEY_ID",
 		"AWS_SECRET_ACCESS_KEY",
-		"LOCAL_FILE_PATH",
+		"LOCAL_FILE_NAME",
 		"S3_BUCKET",
 	]
 	load_s3_envvars(vars=required_key)
@@ -59,9 +59,9 @@ def duckdb_connection( ) -> DuckDBPyConnection:
         INSTALL httpfs;
         LOAD httpfs;
         PRAGMA enable_optimizer;
-        SET s3_region={s3_region};
-		SET s3_access_key_id={s3_access_key_id};
-		SET s3_secret_access_key={s3_secret_access_key};
+        SET s3_region='{s3_region}';
+		SET s3_access_key_id='{s3_access_key_id}';
+		SET s3_secret_access_key='{s3_secret_access_key}';
         """
 	)
 	return con
@@ -78,20 +78,20 @@ def write_data_to_deltatable(
 		con (DuckDBPyConnection): a DuckDB Python connection
 	"""
 	bucket_name = os.getenv("S3_BUCKET")
-	file_name = os.getenv("LOCAL_FILE_NAME")
-
+	data_name = os.getenv("LOCAL_FILE_NAME")
+	s3_table = 'march_delivery'
 	con.sql(
 			f"""
-			CREATE OR REPLACE TABLE {table} AS
+			CREATE OR REPLACE TABLE {s3_table} AS
 			SELECT
 				*
-			FROM read_parquet('s3://{bucket_name}/data/{file_name}');
+			FROM read_parquet('s3://{bucket_name}/data/{data_name}');
 			""")
 
 	arrow_table = con.sql(
 			f"""
 			SELECT * 
-			FROM {table};
+			FROM {s3_table};
 			"""
 	).arrow()
 
