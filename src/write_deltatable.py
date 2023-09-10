@@ -39,14 +39,18 @@ def duckdb_connection( ) -> DuckDBPyConnection:
 	"""
 
 	# load .env file
-	REQUIRED_S3_KEYS = [
+	required_key = [
 		"AWS_DEFAULT_REGION",
 		"AWS_ACCESS_KEY_ID",
 		"AWS_SECRET_ACCESS_KEY",
 		"LOCAL_FILE_PATH",
 		"S3_BUCKET",
 	]
-	load_s3_envvars(vars=REQUIRED_S3_KEYS)
+	load_s3_envvars(vars=required_key)
+
+	s3_region = os.getenv('AWS_DEFAULT_REGION')
+	s3_access_key_id = os.getenv('AWS_ACCESS_KEY_ID')
+	s3_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY')
 
 	# connect to duckdb and setup extensions
 	con = duckdb.connect(':memory:')
@@ -55,33 +59,39 @@ def duckdb_connection( ) -> DuckDBPyConnection:
         INSTALL httpfs;
         LOAD httpfs;
         PRAGMA enable_optimizer;
-        SET s3_region='{os.getenv('AWS_DEFAULT_REGION')}';
-        SET s3_access_key_id={os.getenv('AWS_ACCESS_KEY_ID')};
-        SET s3_secret_access_key='{os.getenv('AWS_SECRET_ACCESS_KEY')}';
+        SET s3_region={s3_region};
+		SET s3_access_key_id={s3_access_key_id};
+		SET s3_secret_access_key={s3_secret_access_key};
         """
 	)
 	return con
 
 
-def write_data_to_deltatable(con: DuckDBPyConnection, table: str):
+def write_data_to_deltatable(
+		con: DuckDBPyConnection,
+		table: str
+		):
 	"""Load data and transform to deltatable.
 	This function also create a table inside database just in case for other purposes
 
 	Args:
 		con (DuckDBPyConnection): a DuckDB Python connection
 	"""
+	bucket_name = os.getenv("S3_BUCKET")
+	file_name = os.getenv("LOCAL_FILE_NAME")
 
 	con.sql(
-			"""
-			CREATE OR REPLACE TABLE march_delivery AS
+			f"""
+			CREATE OR REPLACE TABLE {table} AS
 			SELECT
 				*
-			FROM read_parquet('s3://sonlebucket/data/delivery_orders_march.parquet');
+			FROM read_parquet('s3://{bucket_name}/data/{file_name}');
 			""")
 
 	arrow_table = con.sql(
-			"""
-			SELECT * FROM march_delivery;
+			f"""
+			SELECT * 
+			FROM {table};
 			"""
 	).arrow()
 
@@ -109,7 +119,7 @@ def read_deltatable(
 	"""
 	dt = DeltaTable(table_name)
 
-	print(f"Schema of our data is {dt.schema().to_pyarrow()}")
+	print(f"Schema of our data is \n {dt.schema().to_pyarrow()}")
 
 	try:
 		dt.optimize.compact()
@@ -117,15 +127,16 @@ def read_deltatable(
 	except Exception as e:
 		print(f"Error when optimize table as {e}")
 
+	rename_dict = {
+		'1st_deliver_attempt': 'first_deliver_attempt',
+		'2nd_deliver_attempt': 'second_deliver_attempt',
+		'buyeraddress'       : 'buyer_address',
+		'selleraddress'      : 'seller_address',
+	}
 	df = (
 		pl
-		.scan_delta("march_order")
-		.rename({
-			'1st_deliver_attempt': 'first_deliver_attempt',
-			'2nd_deliver_attempt': 'second_deliver_attempt',
-			'buyeraddress'       : 'buyer_address',
-			'selleraddress'      : 'seller_address',
-		})
+		.scan_delta(table_name)
+		.rename(rename_dict)
 	)
 
 	return df

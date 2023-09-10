@@ -1,7 +1,6 @@
 import os
 import time
 
-import dotenv
 import patito as pt
 import s3fs
 
@@ -16,7 +15,12 @@ from write_deltatable import (
 )
 
 
-def check_file_exists(bucket_name, file_name, key, secret):
+def check_file_exists(
+		bucket_name: str,
+		file_name: str,
+		key: str,
+		secret: str
+		) -> bool:
 	"""Check if a file exists in S3 storage.
 
 	Args:
@@ -31,16 +35,12 @@ def check_file_exists(bucket_name, file_name, key, secret):
 
 	fs = s3fs.S3FileSystem(anon=True,
 	                       key=key,
+
 	                       secret=secret)
-	try:
-		fs.open(f's3://{bucket_name}/data/{file_name}')
-		return True
-	except FileNotFoundError:
-		return False
+	return fs.exists(f's3://{bucket_name}/data/{file_name}')
 
 
 def main():
-	dotenv.load_dotenv()
 
 	start_time = time.time()
 
@@ -52,7 +52,7 @@ def main():
 	# write data to deltalake
 	write_data_to_deltatable(conn, table=table)
 
-	conn.sql("SUMMARIZE march_delivery").show()
+	conn.sql(f"SUMMARIZE {table}").show()
 
 	df = read_deltatable(table_name=table, columns=columns)
 
@@ -70,9 +70,9 @@ def main():
 
 	print(f"Percentage of late delivered orders {result.collect()}")
 
-	conn.sql("SELECT * FROM output;").to_table("output")
-	conn.sql("SUMMARIZE output;").show()
-
+	conn.sql("select * from output;").to_table("output")
+	# conn.sql("SUMMARIZE output;").show()
+	#
 	bucket_name = os.getenv("S3_BUCKET")
 	file_name = os.getenv("S3_FILE_NAME")
 	key = os.getenv("aws_access_key_id")
@@ -88,7 +88,7 @@ def main():
 	        """
 		)
 
-	print(f"DuckDB execution time: {time.time() - start_time} seconds")
+	print(f"Execution time: {time.time() - start_time} seconds")
 
 
 if __name__ == "__main__":

@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y build-essential
  && rm -rf /var/lib/apt/lists/*
 
 # Install application
-COPY script ./script
+COPY src ./script
 RUN poetry install --only main --without dev && rm -rf $POETRY_CACHE_DIR
 
 # Switch to non-root user

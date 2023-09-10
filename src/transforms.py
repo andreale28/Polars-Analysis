@@ -13,17 +13,20 @@ def map_address(map_dict: dict [str, int]) -> pl.Expr:
     then map string according to a location_to_index dict
 
     Args:
-        map (dict[str, int]): location to index dictionary
+        map_dict (dict[str, int]): location to index dictionary
 
     Returns:
         pl.Expr:
     """
+	if not map_dict:
+		raise ValueError("The map_dict argument cannot be empty")
+	if not isinstance(map_dict, dict):
+		raise ValueError("The map_dict argument must be a dictionary")
 	return (
 		cs.string()
 		.str.to_lowercase()
 		.str.extract(r"(.{0,5})$")
 		.map_dict(map_dict)
-		# .string().str.to_lowercase().apply(lambda x: x[-min_length:])
 	)
 
 
@@ -91,6 +94,7 @@ def tweak_result(df: pl.LazyFrame) -> tuple [DataFrame, LazyFrame]:
 	map_to_dict = dict(enumerate(np.array(sla_matrix_1st_attempt).flatten().tolist()))
 
 	num_days1, num_days2 = compute_working_days(df)
+
 	output = (df.with_columns(
 			[
 				map_address(trunc_location_to_index),
