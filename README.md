@@ -81,7 +81,7 @@ curl -sSL https://install.python-poetry.org | python3 -
 # run poetry
 poetry install
 # run pipeline
-python3 -m main.py
+python3 -m duckdb_run.py
 ```
 
 To run Docker container, you can run Dockerfile following these commands.

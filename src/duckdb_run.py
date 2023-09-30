@@ -4,15 +4,15 @@ import time
 import patito as pt
 import s3fs
 
-from schemas import (
-	Input, Output
-)
-from transforms import tweak_result
-from write_deltatable import (
+from duckdb_ingestion import (
 	duckdb_connection,
 	read_deltatable,
 	write_data_to_deltatable,
 )
+from schemas import (
+	Input, Output
+)
+from transforms import tweak_result
 
 
 def check_file_exists(
@@ -42,7 +42,7 @@ def check_file_exists(
 
 def main():
 
-	start_time = time.time()
+	start_time = time.perf_counter()
 
 	table = "march_order"
 	columns = ["orderid", "pick"]
@@ -86,7 +86,7 @@ def main():
 	        """
 		)
 
-	print(f"Execution time: {time.time() - start_time} seconds")
+	print(f"Execution time: {time.perf_counter() - start_time} seconds")
 
 
 if __name__ == "__main__":

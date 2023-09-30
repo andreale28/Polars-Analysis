@@ -5,10 +5,8 @@ description = ""
 authors = ["Son Le <lhson43680@gmail.com>"]
 readme = "README.md"
 
-
 [tool.poetry.dependencies]
 python = "3.10.10"
-polars = "0.18.14"
 duckdb = ">=0.8.0"
 deltalake = ">=0.9.0"
 ruff = "^0.0.270"
@@ -24,6 +22,8 @@ boto3 = ">=1.15.3"
 patito = "0.5.1"
 pytest = "^7.4.2"
 pyarrow = "^13.0.0"
+seaborn = "^0.12.2"
+polars = "^0.19.5"
 
 
 
