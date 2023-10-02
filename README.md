@@ -1,9 +1,22 @@
 # Polars Analysis
 
 A pipeline to pull data from S3 and process using Polars, Delta-RS and DuckDB
+
+## Update
+
+With the new release of Polars `0.19.x`, I decided to update the ETL pipeline
+from `DuckDB - Polars - PyArrow - Deltalake` to solely
+`PyArrow - Polars- Deltalake`. Importing and exporting parquet file with `pyarrow.parquet` is to reduce the time
+consumption instead of DuckDB.
+
+Two new files were added in `src` folder: `polars-ingestion` and `polars-run`. The old ETL pipeline is renamed
+to `duckdb-ingestion` and `duckdb-run`.
+
 ## Design
 
-In this project, we will use `polars` , `duckdb` and `pyarrow` as main data stack
+### DuckDB pipeline
+
+In this `duckDB` pipeline, we will use `polars` , `duckdb` and `pyarrow` as main data stack
 with the support of `delta-rs` as the table format. We also have **AWS S3** as object storage for our dataset.
 The combined data stack can act as the performant option in low-latency ETLs on small to medium-size datasets.
 
@@ -12,6 +25,12 @@ The combined data stack can act as the performant option in low-latency ETLs on 
 3. Performing `compact` and `z-order` optimization using `delta-rs`.
 4. Using `polars` to scan delta table and doing analysis.
 5. Writing the result file (in parquet format) back to **S3**
+
+### PyArrow pipeline
+
+This pipeline is pretty similar to `duckdb` pipeline with `pyarrow.parquet` replacing `duckdb` in sections of importing
+and exporting parquet file back and forth to **AWS S3**. This improves the runtime of pipeline with *
+*_relatively around 20-30 seconds (on my system)_**.
 
 ### So why do we use **Delta-RS**, **DuckDB**, **Polars** and **Arrow**
 
