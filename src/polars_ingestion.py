@@ -53,19 +53,18 @@ def pyarrow_ingestion(table_name: str) -> None:
         'aws_secret_access_key': s3_secret_access_key,
     }
 
-    delta_table_path = table_name
-
     cloud_fs = s3fs.S3FileSystem(
         key=s3_access_key_id,
         secret=s3_secret_access_key,
     )
+    s3_path = f"s3://{s3_bucket_name}/data/{s3_local_file_name}"
 
-    with cloud_fs.open(f"s3://{s3_bucket_name}/data/{s3_local_file_name}", "rb") as f:
+    with cloud_fs.open(s3_path, "rb") as f:
         arrow_table = parquet.read_table(f)
 
     write_deltalake(
         data=arrow_table,
-        table_or_uri=delta_table_path,
+        table_or_uri=table_name,
         mode='overwrite',
         overwrite_schema=True
     )
@@ -75,30 +74,27 @@ def pyarrow_ingestion(table_name: str) -> None:
 
 def read_delta(
         table_name: str,
-        columns: Iterable[str]
+        columns: Iterable[str],
+        rename_dict: dict[str, str]
 ) -> pl.LazyFrame:
     """
     Lazily read deltalake table from disk to LazyFrame with rename
-    :param table_name:
+    :param table_name: name of Delta table to read
     :param columns: columns to optimize with z-orders
+    :param rename_dict: dictionary to rename column names
     :return: LazyFrame
     """
     dt = DeltaTable(table_uri=table_name)
+    schemas = dt.schema().to_pyarrow().names
+    valid_columns = [col for col in columns if col in schemas]
 
     # print(f"Schema of our data is \n {dt.schema().to_pyarrow()}")
-
     try:
         dt.optimize.compact()
-        dt.optimize.z_order(columns=columns)
+        dt.optimize.z_order(columns=valid_columns)
     except Exception as e:
-        print(f"Error when optimize table as {e}")
+        raise ValueError(f"Error when optimizing table: {e}")
 
-    rename_dict = {
-        '1st_deliver_attempt': 'first_deliver_attempt',
-        '2nd_deliver_attempt': 'second_deliver_attempt',
-        'buyeraddress': 'buyer_address',
-        'selleraddress': 'seller_address',
-    }
     df = (
         pl
         .scan_delta(source=table_name)
@@ -108,13 +104,13 @@ def read_delta(
     return df
 
 
-def export_s3(df: pl.DataFrame,
-              s3_region: str,
-              s3_access_key_id: str,
-              s3_secret_access_key: str,
-              s3_bucket_name,
-              s3_file_name: str
-              ):
+def export_s3_by_duckdb(df: pl.DataFrame,
+                        s3_region: str,
+                        s3_access_key_id: str,
+                        s3_secret_access_key: str,
+                        s3_bucket_name,
+                        s3_file_name: str
+                        ):
     """
     export polars.DataFrame to S3 bucket using DuckDB
     :param df:

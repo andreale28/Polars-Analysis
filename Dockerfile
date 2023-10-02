@@ -32,7 +32,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y build-essential
 # Install application
 COPY src ./src
 RUN poetry install --only main --without dev && rm -rf $POETRY_CACHE_DIR
-
+WORKDIR /src
 # Switch to non-root user
 #ENV USER=ah
 #ENV UID=12321
@@ -46,4 +46,4 @@ RUN poetry install --only main --without dev && rm -rf $POETRY_CACHE_DIR
 #    $USER
 #USER $USER
 
-ENTRYPOINT ["python", "-m", "src.main"]
+ENTRYPOINT ["python", "/polars_run.py"]

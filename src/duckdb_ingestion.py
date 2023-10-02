@@ -105,7 +105,8 @@ def write_data_to_deltatable(
 
 def read_deltatable(
 		table_name: str,
-		columns: Iterable [str]
+		columns: Iterable[str],
+		rename_dict: dict[str, str]
 		) -> pl.LazyFrame:
 	"""Load parquet format data to deltalake format, do compact and z-order optimization
 	    then use scan delta method from polars to load it to lazyframe
@@ -127,12 +128,6 @@ def read_deltatable(
 	except Exception as e:
 		print(f"Error when optimize table as {e}")
 
-	rename_dict = {
-		'1st_deliver_attempt': 'first_deliver_attempt',
-		'2nd_deliver_attempt': 'second_deliver_attempt',
-		'buyeraddress'       : 'buyer_address',
-		'selleraddress'      : 'seller_address',
-	}
 	df = (
 		pl
 		.scan_delta(table_name)

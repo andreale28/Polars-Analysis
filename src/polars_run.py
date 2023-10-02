@@ -46,14 +46,21 @@ def main():
 
     table = "march_order"
     columns = ["orderid", "pick"]
+    rename_dict = {
+        '1st_deliver_attempt': 'first_deliver_attempt',
+        '2nd_deliver_attempt': 'second_deliver_attempt',
+        'buyeraddress': 'buyer_address',
+        'selleraddress': 'seller_address',
+    }
 
     pyarrow_ingestion(
         table_name=table
     )
 
     df = read_delta(
-        table,
-        columns=columns
+        table_name=table,
+        columns=columns,
+        rename_dict=rename_dict
     )
 
     try:

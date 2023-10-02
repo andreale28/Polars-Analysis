@@ -106,7 +106,7 @@ def tweak_result(
 
     num_days1, num_days2 = compute_working_days(df)
 
-    output = (df.with_columns(
+    output: DataFrame = (df.with_columns(
         [
             map_address(trunc_location_to_index),
         ]
@@ -142,7 +142,7 @@ def tweak_result(
     )
     )
 
-    result = (
+    result: LazyFrame = (
         output.lazy()
         .group_by("is_late")
         .agg(pl.count("is_late").alias("count_order"))
